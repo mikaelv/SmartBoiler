@@ -314,9 +314,10 @@ char* getDateTime(time_t time) {
 void readTemperatureDS18B20() {
   static unsigned long lastReadTime = 0;
   unsigned long currentTime = millis();
-  if ((currentTime - lastReadTime) >= 2000) {
-   sensors.requestTemperatures();
-   currentTemperature = sensors.getTempCByIndex(0);
+  if ((currentTime - lastReadTime) >= 5000) {
+    lastReadTime = currentTime;
+    sensors.requestTemperatures();
+    currentTemperature = sensors.getTempCByIndex(0);
   }
 }
 #endif
@@ -689,10 +690,10 @@ void readDht11() {
   static unsigned long lastReadTime = 0;
   unsigned long currentTime = millis();
   if ((currentTime - lastReadTime) >= 2000) {
+    lastReadTime = currentTime;
     int chk = DHT11.read(DHT11PIN);
     if (chk != DHTLIB_OK)
       pprintfln(SERIAL0, F("DHT11 checksum: %d"), chk);
-    lastReadTime = currentTime;
   }
 }
 #endif
@@ -717,13 +718,13 @@ byte getKeyPress() {
   
   byte key = getKey(analogRead(A0));
   if (key != oldKey) {  // if keypress is detected
-    /*delay(50); // wait for debounce time
+    delay(50); // wait for debounce time
     key = getKey(analogRead(A0));
-    if (key != oldKey) {*/
+    if (key != oldKey) {
        oldKey = key;
        if (key >= 0)
          return key;
-    //}
+    }
   }
   return -1;
 }
@@ -774,6 +775,8 @@ void setup() {
 
 
 void loop() {
+  delay(20);
+
   #ifdef DS18B20_ENABLED
   readTemperatureDS18B20();
   #elif TMP36_ENABLED
@@ -783,7 +786,7 @@ void loop() {
   #endif
 
   // Read buttons
-  byte keyPress = getKey(analogRead(A0));
+  byte keyPress = getKeyPress();
   if (keyPress != -1) {
     if (keyPress == KEY_UP)
       desiredTemperature++;
